@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4 text-center fw-bold text-primary">Dashboard</h2>
+<hr class="mb-4">
+
+
+<!-- Filters -->
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label>Start Date</label>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+    </div>
+    <div class="col-md-3">
+        <label>End Date</label>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+    </div>
+    <div class="col-md-3">
+    <label>Worker Name</label>
+    <select name="worker_name" class="form-select">
+        <option value="">-- All Workers --</option>
+        {% for name in worker_names %}
+            <option value="{{ name }}" {% if name == search_name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+</form>
+
+<!-- Summary 
+<div class="row mb-4">
+    <div class="col-md-3"><strong>Total Cotton:</strong> {{ total_cotton }} kg</div>
+    <div class="col-md-3"><strong>Total Payment:</strong> ₹{{ total_payment | round(2) }}</div>
+    <div class="col-md-3"><strong>Revenue:</strong> ₹{{ revenue | round(2) }}</div>
+    <div class="col-md-3"><strong>Profit:</strong> ₹{{ profit | round(2) }}</div>
+</div>
+-->
+
+<div class="row text-center mb-4">
+    <div class="col-md-3">
+        <div class="card border-success shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Cotton</h5>
+                <p class="card-text fs-4 fw-bold text-success">{{ total_cotton }} kg</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-primary shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Paid</h5>
+                <p class="card-text fs-4 fw-bold text-primary">₹{{ total_payment | round(2) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Revenue</h5>
+                <p class="card-text fs-4 fw-bold text-warning">₹{{ revenue | round(2) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Profit</h5>
+                <p class="card-text fs-4 fw-bold text-danger">₹{{ profit | round(2) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<table class="table table-striped table-hover table-bordered align-middle">
+
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Worker</th>
+            <th>Cotton (kg)</th>
+            <th>Amount Paid (₹)</th>
+            <th>Action</th> <!-- New column -->
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in tables %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.worker_name }}</td>
+            <td>{{ row.cotton_kg }}</td>
+            <td>{{ (row.cotton_kg * row.rate_per_kg) | round(2) }}</td>
+            <td>
+                <form method="POST" action="/delete/{{ row.id }}" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+    <i class="bi bi-trash3"></i> Delete
+</button>
+
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<!-- Chart -->
+<h4 class="mt-5">Cotton Collection vs Profit</h4>
+<canvas id="profitChart" width="100%" height="40"></canvas>
+
+<script>
+const ctx = document.getElementById('profitChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ labels | tojson }},
+        datasets: [
+            {
+                label: 'Cotton Collected (kg)',
+                data: {{ cotton | tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+            },
+            {
+                label: 'Profit (₹)',
+                data: {{ profit_data | tojson }},
+                type: 'line',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Daily Cotton vs Profit' }
+        }
+    }
+});
+</script>
+{% endblock %}
